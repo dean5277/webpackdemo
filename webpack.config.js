@@ -7,7 +7,7 @@ const purifyCssWebpack = require("purifycss-webpack")
 const HtmlWebpackPlugin = require("html-webpack-plugin")
 const extractTextPlugin = require("extract-text-webpack-plugin")
 function resolve (dir) {
-  return path.join(__dirname, '..', dir)
+  return path.join(__dirname,  dir)
 }
 module.exports = {
   mode: 'development',
@@ -33,14 +33,43 @@ module.exports = {
     port: 8083,
     open: true,
     compress: true,
-    hot: true
+    hot: true,
+    proxy: {
+      '/category': {
+        target: "http://10.0.7.192:7070",
+        changeOrigin: true,
+        pathRewrite: {
+            '^/category': '/category'
+        }
+      }
+    }
   },
   module: {
     rules: [
       {
-        test: /\.(js)$/,
-        use: 'babel-loader',
-        exclude: "/node_modules/"
+        test: /\.css$/,
+        use: extractTextPlugin.extract({
+          fallback: "style-loader",
+          use: ["css-loader", "postcss-loader"],
+          // css中的基础路径
+          publicPath: "../"
+
+        })
+      },
+      {
+        test: /\.less$/,
+        use: extractTextPlugin.extract({
+          fallback:"style-loader",
+          use: ["css-loader", "less-loader"]
+        })
+      },
+      {
+
+        test: /\.js$/,
+        exclude: /(node_modules)/,
+        use: {
+          loader: "babel-loader"
+        }
       },
       {
         test: /\.(png|jpg|gif)$/,
@@ -77,7 +106,9 @@ module.exports = {
     new extractTextPlugin("css/index.css"),
     // 全局暴露统一入口
     new webpack.ProvidePlugin({
-      $: "jquery"
+      $: "jquery",
+      jQuery: "jquery",
+      "window.jQuery": "jquery"
     }),
     // 自动生成html模板
     new HtmlWebpackPlugin({
